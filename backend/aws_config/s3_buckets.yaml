@@ -1,0 +1,5 @@
+1000genomes:
+  buckets:
+    phase3:
+      Bucket: "1000genomes"
+      Prefix: "phase3/data/{sample}/exome_alignment/"

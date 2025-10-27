@@ -1,0 +1,22 @@
+name: quality_app_env
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - pip
+  - samtools
+  - pip:
+      - boto3
+      - pandas
+      - plotly
+      - pysam
+      - pyyaml
+      - shiny
+      - shinywidgets
+      - shinyswatch
+      - requests
+      - libsass
+      - openpyxl
+      - dotenv
