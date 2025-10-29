@@ -159,9 +159,17 @@ To contribute to this project:
  4. Push to your branch: ```git push origin my-branch```.
  5. Open a pull request.
 
-## Contact
-Developer: Ana Rita Silva
-Email: anar.m.silva10@gmail.com
+## Developer and Contributors
+Developed by: Ana Rita Moreira da Silva, during the MSc internship at Unilabs Genetics.
+
+Contributors: [Pedro Venâncio](https://github.com/pfcv99),
+              [Alberto Pessoa](https://github.com/pessoa-am), Unilabs Genetics Team
+
+Supervised by: [Alberto Pessoa](https://github.com/pessoa-am), Unilabs Genetics Team
+
+This work is part of the Master's thesis titled 'Development of quality management software in Next Generation Sequencing (NGS) analysis', completed within the Master in Clinical Bioinformatics (Genome specialization) at the University of Aveiro.
+
+Contact: anar.m.silva10@gmail.com
 
 ## License
 This project is licensed under the terms of the MIT License.
