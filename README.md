@@ -48,7 +48,7 @@ metrics_app
  - **Gene Panel Analysis** – Analyze multiple genes from a BED file and summarize per-panel, per-gene and per-exon quality metrics.
  - **Custom BED Analysis** – Upload custom BED regions for flexible, targeted quality evaluation.
  - **Visualization** – Generate interactive plots for coverage depth and summary tables of computed metrics.
- - **Reporting** – Export comprehensive reports (HTML, PDF, or CSV) including metrics and visualizations.
+ - **Reporting** – Export comprehensive reports including metrics and visualizations.
  - **S3 Integration** – Access BAM/CRAM files directly from Amazon S3, namely the 1000 Genomes Project, without local downloads for Single Gene, Gene Panel and Custom BED analysis. Note: to change S3 Bucket, please, read the aws_config README file.
  - **Command-line Support** – Run backend Python scripts independently for automation and pipeline integration.
 
