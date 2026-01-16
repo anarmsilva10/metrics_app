@@ -86,8 +86,6 @@ dependencies:
  
 ## Installation and Setup
 
-In order for this application to work, the log, depth_calculator, and aws_config repositories are required.
-
 ### Docker
   1. Clone the repository:
   ```
