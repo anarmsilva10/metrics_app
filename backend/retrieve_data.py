@@ -143,6 +143,7 @@ def refseq_select():
     query = compact_biomart_query(BIOMART_SELECT_REFSEQ)
 
     response = requests.get(BIOMART_URL_HG38, params={"query":query})
+    print('here')
 
     if response.status_code != 200:
         shared_log.logger.error("Error retrieving RefSeq ID for Mane Select data.")
@@ -172,6 +173,7 @@ def mane_select():
     query = compact_biomart_query(BIOMART_MANE_SELECT)
 
     response = requests.get(BIOMART_URL_HG38, params={"query": query})
+    print('now here')
 
     if response.status_code != 200:
         shared_log.logger.error("Error retrieving MANE Select data!")
@@ -199,6 +201,7 @@ def refseq_pc():
     query = compact_biomart_query(BIOMART_PC_REFSEQ)
 
     response = requests.get(BIOMART_URL_HG38, params={"query":query})
+    print('im here')
 
     if response.status_code != 200:
         shared_log.logger.error("Error retrieving RefSeq ID for Mane Plus Clinical data.")
@@ -228,6 +231,7 @@ def mane_plus_clinical():
     query = compact_biomart_query(BIOMART_PLUS)
 
     response = requests.get(BIOMART_URL_HG38, params={"query": query})
+    print('no here')
 
     if response.status_code != 200:
         shared_log.logger.error("Error retrieving MANE Plus Clinical data!")
@@ -340,7 +344,6 @@ def exon_number(df, trim_utr, padding):
     Numbering of exons in order of their appearance in the genome.
     Optionally trims 5' and 3' UTRs to include only coding regions,
     and applies padding to include splice site regions.
-    Note: there is no need to look at the strand because the positions are swaped from biomart.
 
     Args:
         df (pd.DataFrame): BioMart-style DataFrame with exon/transcript data.
@@ -359,15 +362,29 @@ def exon_number(df, trim_utr, padding):
         transcript = row['Transcript stable ID']
         exon_start = row['Exon region start (bp)']
         exon_end = row['Exon region end (bp)']
+        strand = row['Strand']
 
         if trim_utr:
+            utr_5_start = row["5' UTR start"]
+            utr_5_end   = row["5' UTR end"]
+            utr_3_start = row["3' UTR start"]
+            utr_3_end   = row["3' UTR end"]
+
             # Trim 5' UTR
-            if not pd.isna(row["5' UTR start"]) and not pd.isna(row["5' UTR end"]):
-                exon_start = max(exon_start, row["5' UTR end"] + 1)
+            if not pd.isna(utr_5_start) and not pd.isna(utr_5_end):
+                if utr_5_start <= exon_end and utr_5_end >= exon_start:
+                    if strand == 1:
+                        exon_start = max(exon_start, utr_5_end + 1)
+                    else:
+                        exon_end = min(exon_end, utr_5_start - 1)
 
             # Trim 3' UTR
-            if not pd.isna(row["3' UTR start"]) and not pd.isna(row["3' UTR end"]):
-                exon_end = min(exon_end, row["3' UTR start"] - 1)
+            if not pd.isna(utr_3_start) and not pd.isna(utr_3_end):
+                if utr_3_start <= exon_end and utr_3_end >= exon_start:
+                    if strand == 1:
+                        exon_end = min(exon_end, utr_3_start - 1)
+                    else:
+                        exon_start = max(exon_start, utr_3_end + 1)
 
             # Skip if trimming removes the whole exon
             if exon_start > exon_end:
@@ -432,6 +449,7 @@ def merge_refseq(refseq_select_df, refseq_pc_df):
     refseq_df = refseq_df.groupby('Transcript stable ID', as_index=False).first()
 
     refseq_df = refseq_df.drop(columns={'mane_select', 'plus_clinical'})
+    print(refseq_df)
 
     return refseq_df
 
@@ -470,12 +488,17 @@ def merge_mane(mane_select_df, mane_pc_df, trim_utr, padding):
     mane_df = pd.concat([mane_select_df, pc_df], ignore_index=True)
     mane_df = mane_df.drop_duplicates(subset=['Transcript stable ID', 'Chromosome/scaffold name',
                                               'Exon region start (bp)', 'Exon region end (bp)'])
+    print(f"antes sort:{mane_df}")
 
     shared_log.logger.info("Sorting positions and chromossomes in MANE dataframe.")
     mane_df = sort(mane_df)
+    print(f'depois srt:{mane_df}')
 
     shared_log.logger.info("Numbering exons in MANE dataframe")
     mane_df = exon_number(mane_df, trim_utr, padding)
+    assert (mane_df['Exon region start (bp)'] <= mane_df['Exon region end (bp)']).all(), \
+       "Invalid exon coordinates after UTR trimming"
+    print(f'trim:{mane_df}')
 
     return mane_df
 
@@ -503,6 +526,7 @@ def hg38(refseq_select_df, refseq_pc_df, mane_select_df, mane_pc_df, trim_utr, p
 
     # Final DataFrame with all info about hg38 data from MANE
     hg38_df = pd.merge(mane_df, refseq_df, on='Transcript stable ID', how='inner')
+    print(hg38_df)
 
     return hg38_df
 
@@ -538,6 +562,9 @@ def hg19_filter(refseq_hg19_df, hg19_df, hg38_df, trim_utr, padding):
 
     shared_log.logger.info("Numbering exons in hg19 dataframe.")
     hg19_filtered_df = exon_number(hg19_filtered_df, trim_utr, padding)
+
+    assert (hg19_filtered_df['Exon region start (bp)'] <=
+        hg19_filtered_df['Exon region end (bp)']).all()
 
     return hg19_filtered_df
 
@@ -669,7 +696,6 @@ def build_genome(trim_utr=False, padding=0):
 def main ():
 
     parser = argparse.ArgumentParser(description='Build genome data files.')
-    parser.add_argument('--genome', type=str, choices=['hg19', 'hg38'])
     parser.add_argument('--trim_utr', action='store_true', help="Add triming for 5' and 3' UTRs to include only coding regions")
     parser.add_argument('--padding', type=int, default=0, help="Applies padding to include splice site regions")
     args = parser.parse_args()

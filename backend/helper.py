@@ -185,7 +185,8 @@ def utr_info(genome, selected_genes):
             "5_start": gene_data.get("5' UTR start"),
             "5_end": gene_data.get("5' UTR end"),
             "3_start": gene_data.get("3' UTR start"),
-            "3_end": gene_data.get("3' UTR end")
+            "3_end": gene_data.get("3' UTR end"),
+            "strand": gene_data.get("strand")
         }
 
     return utr_dict
@@ -256,15 +257,25 @@ def exon_number_json(exons, trim_utr, padding, utr_dict):
             utr_5_end = utr.get("5_end")
             utr_3_start = utr.get("3_start")
             utr_3_end = utr.get("3_end")
+            strand  = utr.get("strand")
 
             # Trim 5' UTR
             if utr_5_start is not None and utr_5_end is not None:
-                exon_start = max(exon_start, utr_5_end + 1)
+                if utr_5_start <= exon_end and utr_5_end >= exon_start:
+                    if strand == 1:
+                        exon_start = max(exon_start, utr_5_end + 1)
+                    else:
+                        exon_end = min(exon_end, utr_5_start - 1)
 
             # Trim 3' UTR
             if utr_3_start is not None and utr_3_end is not None:
-                exon_end = min(exon_end, utr_3_start - 1)
+                if utr_3_start <= exon_end and utr_3_end >= exon_start:
+                    if strand == 1:
+                        exon_end = min(exon_end, utr_3_start - 1)
+                    else:
+                        exon_start = max(exon_start, utr_3_end + 1)
 
+            # Skip if trimming removes the whole exon
             if exon_start > exon_end:
                 continue
 
@@ -283,5 +294,7 @@ def exon_number_json(exons, trim_utr, padding, utr_dict):
             "size": exon_end - exon_start + 1,
             "gene": exon['gene']
         })
+
+        print(processed_exons)
 
     return processed_exons
